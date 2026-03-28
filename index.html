@@ -3,148 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bharat AI Stock Terminal</title>
+    <title>Bharat AI Premium Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
-        .neon-border { box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+        .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); }
+        .tab-active { border-bottom: 2px solid #10b981; color: #10b981; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-[#020617] text-slate-200 min-h-screen font-sans">
 
-    <header class="p-5 glass sticky top-0 z-50 border-b border-slate-800">
-        <div class="max-w-7xl mx-auto flex flex-col md:row justify-between items-center gap-4">
+    <header class="p-4 glass sticky top-0 z-50 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <div class="bg-emerald-500 p-2 rounded-lg text-black"><i class="fas fa-chart-line fa-lg"></i></div>
-                <h1 class="text-xl font-bold tracking-tight">BHARAT<span class="text-emerald-500">AI</span> TERMINAL</h1>
+                <div class="bg-emerald-500 p-2 rounded-lg text-black"><i class="fas fa-microchip"></i></div>
+                <h1 class="text-lg font-black tracking-tighter">BHARAT<span class="text-emerald-500 italic">PRO</span></h1>
             </div>
-            <div class="flex gap-2 w-full md:w-96">
-                <input id="symbol" type="text" placeholder="NSE Symbol (e.g. RELIANCE)" class="w-full bg-slate-900 border border-slate-700 px-4 py-2 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none uppercase text-sm">
-                <button onclick="runAnalysis()" class="bg-emerald-600 hover:bg-emerald-500 px-6 py-2 rounded-xl font-bold transition-all text-sm whitespace-nowrap">ANALYZE</button>
+            
+            <div class="relative w-full lg:w-[500px]">
+                <div class="flex gap-2">
+                    <input id="symbolInput" type="text" autocomplete="off" placeholder="Search Company (e.g. HDFC, SILVERBEES)" 
+                        class="w-full bg-slate-900/50 border border-slate-700 px-4 py-2 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                        oninput="handleSearch(this.value)">
+                    <button id="saveBtn" onclick="toggleWatchlist()" class="bg-slate-800 hover:bg-slate-700 p-2 px-4 rounded-xl border border-slate-600">
+                        <i class="far fa-star"></i>
+                    </button>
+                </div>
+                <div id="searchDropdown" class="hidden absolute top-full left-0 right-0 mt-2 glass rounded-xl overflow-hidden shadow-2xl z-[60] max-h-64 overflow-y-auto border border-slate-700"></div>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
+    <main class="max-w-7xl mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="glass p-6 rounded-2xl">
-                <p class="text-xs text-slate-400 uppercase font-bold mb-1">Last Traded Price</p>
-                <div id="price" class="text-3xl font-mono font-bold text-white">₹0.00</div>
-                <div id="change" class="text-sm mt-1">--</div>
+        <div class="lg:col-span-3 space-y-6">
+            <div class="glass p-5 rounded-3xl">
+                <h3 class="text-xs font-bold text-slate-400 mb-4 uppercase tracking-widest"><i class="fas fa-list-ul mr-2"></i> My Watchlist</h3>
+                <div id="watchlistContent" class="space-y-3 text-sm">
+                    <p class="text-slate-500 italic text-xs">No stocks saved yet.</p>
+                </div>
             </div>
-            <div class="glass p-6 rounded-2xl">
-                <p class="text-xs text-slate-400 uppercase font-bold mb-1">Day High</p>
-                <div id="high" class="text-xl font-bold text-emerald-400">₹0.00</div>
-            </div>
-            <div class="glass p-6 rounded-2xl">
-                <p class="text-xs text-slate-400 uppercase font-bold mb-1">Day Low</p>
-                <div id="low" class="text-xl font-bold text-red-400">₹0.00</div>
-            </div>
-            <div class="glass p-6 rounded-2xl bg-emerald-500/10 border-emerald-500/30">
-                <p class="text-xs text-emerald-400 uppercase font-bold mb-1">Technical Signal</p>
-                <div id="signal" class="text-xl font-bold">READY</div>
+
+            <div class="glass p-5 rounded-3xl border-t-2 border-emerald-500/30">
+                <h3 class="text-xs font-bold text-emerald-400 mb-4 uppercase tracking-widest"><i class="fas fa-fire mr-2"></i> Top Gainers (Live)</h3>
+                <div id="topGainers" class="space-y-3 text-xs">
+                    <div class="animate-pulse h-4 bg-slate-800 rounded"></div>
+                    <div class="animate-pulse h-4 bg-slate-800 rounded"></div>
+                </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 glass p-6 rounded-2xl min-h-[400px]">
-                <h3 class="text-sm font-bold text-slate-400 mb-4 uppercase italic">Technical Chart (Price Action)</h3>
-                <div class="h-[350px] w-full">
+        <div class="lg:col-span-6 space-y-6">
+            <div class="glass p-6 rounded-3xl">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h2 id="activeSymbol" class="text-3xl font-black text-white">SELECT STOCK</h2>
+                        <p id="activeName" class="text-xs text-slate-400">NSE Market Insight</p>
+                    </div>
+                    <div class="text-right">
+                        <div id="activePrice" class="text-2xl font-mono font-bold">₹0.00</div>
+                        <div id="activeChange" class="text-sm">--</div>
+                    </div>
+                </div>
+                <div class="h-[300px] w-full">
                     <canvas id="stockChart"></canvas>
                 </div>
             </div>
 
-            <div class="glass p-6 rounded-2xl border-l-4 border-l-emerald-500 flex flex-col">
-                <div class="flex items-center gap-2 mb-4">
-                    <i class="fas fa-robot text-emerald-500"></i>
-                    <h3 class="text-sm font-bold uppercase tracking-widest">Gemini AI Insights</h3>
+            <div class="glass p-6 rounded-3xl border-l-4 border-emerald-500">
+                <div class="flex gap-4 border-b border-slate-800 mb-4 pb-2 text-xs font-bold text-slate-400 uppercase">
+                    <button onclick="switchAI('tech')" class="tab-active py-1 px-2">Technical</button>
+                    <button onclick="switchAI('fund')" class="py-1 px-2">Fundamental</button>
+                    <button onclick="switchAI('news')" class="py-1 px-2">News & Why?</button>
                 </div>
-                <div id="aiLoader" class="hidden animate-pulse space-y-3">
-                    <div class="h-4 bg-slate-800 rounded w-3/4"></div>
-                    <div class="h-4 bg-slate-800 rounded w-full"></div>
-                    <div class="h-4 bg-slate-800 rounded w-5/6"></div>
+                <div id="aiLoader" class="hidden py-4 text-center"><i class="fas fa-circle-notch animate-spin text-emerald-500"></i></div>
+                <div id="aiText" class="text-sm leading-relaxed text-slate-300">
+                    Search for a stock to see deep research.
                 </div>
-                <div id="aiOutput" class="text-sm text-slate-300 leading-relaxed overflow-y-auto">
-                    Enter a stock symbol to generate an AI technical analysis and news summary.
+            </div>
+        </div>
+
+        <div class="lg:col-span-3 space-y-6">
+            <div class="glass p-5 rounded-3xl">
+                <h3 class="text-xs font-bold text-slate-400 mb-4 uppercase">Key Financials</h3>
+                <div id="financials" class="space-y-4 text-sm">
+                    <div class="flex justify-between"><span>P/E Ratio</span><b id="peValue">--</b></div>
+                    <div class="flex justify-between"><span>EPS</span><b id="epsValue">--</b></div>
+                    <div class="flex justify-between"><span>52W High</span><b id="highValue">--</b></div>
                 </div>
             </div>
         </div>
     </main>
 
     <script>
-        // CONFIG - PASTE YOUR KEYS HERE
-        const TD_API_KEY = 'fdf2ab9f462140edbb9982503bb3c4c5';
-        const GEMINI_API_KEY = 'gen-lang-client-0664481384';
+        const CONFIG = {
+            TD_KEY: 'fdf2ab9f462140edbb9982503bb3c4c5',
+            GEMINI_KEY: 'gen-lang-client-0664481384'
+        };
 
+        let currentStock = { symbol: '', name: '', data: {} };
+        let watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
         let chartInstance = null;
 
-        async function runAnalysis() {
-            const symbol = document.getElementById('symbol').value.toUpperCase();
-            if (!symbol) return;
+        // On Load
+        window.onload = () => { renderWatchlist(); fetchGainers(); };
 
-            // Reset UI
-            document.getElementById('aiOutput').innerText = "";
+        async function handleSearch(q) {
+            if (q.length < 2) return document.getElementById('searchDropdown').classList.add('hidden');
+            const res = await fetch(`https://api.twelvedata.com/symbol_search?symbol=${q}&apikey=${CONFIG.TD_KEY}`);
+            const data = await res.json();
+            if (data.data) renderDropdown(data.data.filter(s => s.exchange === "NSE"));
+        }
+
+        function renderDropdown(stocks) {
+            const d = document.getElementById('searchDropdown');
+            d.innerHTML = stocks.slice(0, 5).map(s => `
+                <div class="p-4 hover:bg-slate-800 cursor-pointer border-b border-slate-800 flex justify-between" onclick="selectStock('${s.symbol}', '${s.instrument_name}')">
+                    <span><b>${s.symbol}</b> <br><small class="text-slate-500">${s.instrument_name}</small></span>
+                    <span class="text-xs text-emerald-500 uppercase">${s.exchange}</span>
+                </div>
+            `).join('');
+            d.classList.remove('hidden');
+        }
+
+        async function selectStock(symbol, name) {
+            document.getElementById('searchDropdown').classList.add('hidden');
             document.getElementById('aiLoader').classList.remove('hidden');
+            
+            try {
+                const quote = await (await fetch(`https://api.twelvedata.com/quote?symbol=${symbol}:NSE&apikey=${CONFIG.TD_KEY}`)).json();
+                const history = await (await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}:NSE&interval=1day&outputsize=20&apikey=${CONFIG.TD_KEY}`)).json();
+                
+                currentStock = { symbol, name, data: quote };
+                updateMainUI(quote, name, history.values);
+                switchAI('tech'); // Default view
+                updateWatchlistIcon();
+            } catch (e) { alert("Data fetch failed. Check API Keys."); }
+        }
+
+        function updateMainUI(q, name, history) {
+            document.getElementById('activeSymbol').innerText = q.symbol;
+            document.getElementById('activeName').innerText = name;
+            document.getElementById('activePrice').innerText = `₹${parseFloat(q.close).toLocaleString('en-IN')}`;
+            const chg = parseFloat(q.percent_change).toFixed(2);
+            document.getElementById('activeChange').innerText = `${chg}% Today`;
+            document.getElementById('activeChange').className = chg >= 0 ? 'text-emerald-400' : 'text-red-400';
+            
+            document.getElementById('peValue').innerText = q.trailing_pe || 'N/A';
+            document.getElementById('epsValue').innerText = q.eps || 'N/A';
+            document.getElementById('highValue').innerText = `₹${parseFloat(q.fifty_two_week.high).toLocaleString()}`;
+            
+            renderChart(history);
+        }
+
+        async function switchAI(mode) {
+            const aiText = document.getElementById('aiText');
+            document.getElementById('aiLoader').classList.remove('hidden');
+            aiText.innerText = "";
+
+            let prompt = "";
+            if(mode === 'tech') prompt = `Analyze ${currentStock.symbol} technically. Current price ₹${currentStock.data.close}. Give Buy/Sell/Hold recommendation with Support and Resistance levels.`;
+            if(mode === 'fund') prompt = `Analyze ${currentStock.symbol} fundamentally. P/E is ${currentStock.data.trailing_pe}. Is this undervalued or overvalued for the Indian market?`;
+            if(mode === 'news') prompt = `Why is ${currentStock.symbol} moving ${currentStock.data.percent_change}% today? Summarize recent news sentiment and if there's any breakout or breakdown.`;
 
             try {
-                // 1. Fetch Real Price Data
-                const quoteRes = await fetch(`https://api.twelvedata.com/quote?symbol=${symbol}:NSE&apikey=${TD_API_KEY}`);
-                const quote = await quoteRes.json();
-                
-                if (quote.status === "error") throw new Error(quote.message);
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${CONFIG.GEMINI_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const json = await res.json();
+                aiText.innerText = json.candidates[0].content.parts[0].text;
+            } catch (e) { aiText.innerText = "AI Service temporarily unavailable."; }
+            document.getElementById('aiLoader').classList.add('hidden');
+        }
 
-                updatePriceUI(quote);
-
-                // 2. Fetch History for Chart
-                const histRes = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}:NSE&interval=1day&outputsize=15&apikey=${TD_API_KEY}`);
-                const history = await histRes.json();
-                renderChart(history.values);
-
-                // 3. Ask Gemini for Recommendation
-                generateAIRecommendation(symbol, quote);
-
-            } catch (err) {
-                alert("Error: " + err.message);
-                document.getElementById('aiLoader').classList.add('hidden');
+        async function fetchGainers() {
+            // Simplified: Fetch top 5 NIFTY heavyweights to simulate gainers
+            const symbols = ['RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'ICICIBANK'];
+            const container = document.getElementById('topGainers');
+            container.innerHTML = "";
+            for(let s of symbols) {
+                const r = await fetch(`https://api.twelvedata.com/quote?symbol=${s}:NSE&apikey=${CONFIG.TD_KEY}`);
+                const d = await r.json();
+                container.innerHTML += `
+                    <div class="flex justify-between border-b border-slate-800 pb-2 cursor-pointer hover:text-emerald-400" onclick="selectStock('${s}', '${s}')">
+                        <span>${s}</span>
+                        <span class="${d.percent_change >= 0 ? 'text-emerald-400' : 'text-red-400'}">${parseFloat(d.percent_change).toFixed(2)}%</span>
+                    </div>`;
             }
         }
 
-        function updatePriceUI(data) {
-            document.getElementById('price').innerText = `₹${parseFloat(data.close).toFixed(2)}`;
-            document.getElementById('high').innerText = `₹${parseFloat(data.high).toFixed(2)}`;
-            document.getElementById('low').innerText = `₹${parseFloat(data.low).toFixed(2)}`;
-            
-            const change = parseFloat(data.percent_change).toFixed(2);
-            const changeEl = document.getElementById('change');
-            changeEl.innerText = `${change}% Today`;
-            changeEl.className = change >= 0 ? 'text-emerald-400 text-sm' : 'text-red-400 text-sm';
-            
-            const signalEl = document.getElementById('signal');
-            signalEl.innerText = change >= 0 ? 'BULLISH' : 'BEARISH';
-            signalEl.className = `text-xl font-bold ${change >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+        function toggleWatchlist() {
+            const idx = watchlist.findIndex(s => s.symbol === currentStock.symbol);
+            if(idx > -1) watchlist.splice(idx, 1);
+            else watchlist.push({symbol: currentStock.symbol, name: currentStock.name});
+            localStorage.setItem('watchlist', JSON.stringify(watchlist));
+            renderWatchlist();
+            updateWatchlistIcon();
+        }
+
+        function renderWatchlist() {
+            const container = document.getElementById('watchlistContent');
+            if(watchlist.length === 0) return;
+            container.innerHTML = watchlist.map(s => `
+                <div class="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-slate-800 cursor-pointer hover:border-emerald-500" onclick="selectStock('${s.symbol}', '${s.name}')">
+                    <span><b>${s.symbol}</b></span>
+                    <i class="fas fa-chevron-right text-[10px] text-slate-600"></i>
+                </div>
+            `).join('');
+        }
+
+        function updateWatchlistIcon() {
+            const icon = document.querySelector('#saveBtn i');
+            const exists = watchlist.some(s => s.symbol === currentStock.symbol);
+            icon.className = exists ? 'fas fa-star text-yellow-500' : 'far fa-star';
         }
 
         function renderChart(values) {
             const ctx = document.getElementById('stockChart').getContext('2d');
-            const labels = values.map(v => v.datetime).reverse();
-            const prices = values.map(v => parseFloat(v.close)).reverse();
-
+            const reversed = [...values].reverse();
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: labels,
+                    labels: reversed.map(v => v.datetime),
                     datasets: [{
-                        label: 'Price',
-                        data: prices,
+                        data: reversed.map(v => v.close),
                         borderColor: '#10b981',
-                        borderWidth: 3,
-                        pointRadius: 4,
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 0,
                         fill: true,
+                        backgroundColor: 'rgba(16, 185, 129, 0.05)',
                         tension: 0.4
                     }]
                 },
@@ -153,32 +246,11 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                        x: { display: false },
+                        y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } }
                     }
                 }
             });
-        }
-
-        async function generateAIRecommendation(symbol, data) {
-            const output = document.getElementById('aiOutput');
-            const prompt = `Analyze stock ${symbol} at price ₹${data.close}. Change today is ${data.percent_change}%. Give a professional Indian market style recommendation (Buy/Hold/Sell) and mention 3 potential technical reasons. Keep it concise.`;
-
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-
-                const result = await response.json();
-                const aiText = result.candidates[0].content.parts[0].text;
-                
-                document.getElementById('aiLoader').classList.add('hidden');
-                output.innerText = aiText;
-            } catch (err) {
-                output.innerText = "Gemini was unable to analyze this at the moment.";
-            }
         }
     </script>
 </body>
