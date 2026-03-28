@@ -3,112 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Stock Agent | NSE & BSE</title>
+    <title>Bharat AI Stock Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        .neon-border { box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+    </style>
 </head>
-<body class="bg-gray-900 text-white font-sans">
+<body class="bg-[#020617] text-slate-200 min-h-screen font-sans">
 
-    <nav class="p-6 border-b border-gray-800 bg-gray-900 sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-blue-500 italic">INDIA<span class="text-white font-light text-sm">STOCK AI</span></h1>
-            <div class="flex gap-4">
-                <input id="stockInput" type="text" placeholder="Enter Symbol (e.g. RELIANCE)" class="bg-gray-800 border border-gray-700 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <button onclick="analyzeStock()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-semibold transition">Analyze</button>
+    <header class="p-5 glass sticky top-0 z-50 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto flex flex-col md:row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-500 p-2 rounded-lg text-black"><i class="fas fa-chart-line fa-lg"></i></div>
+                <h1 class="text-xl font-bold tracking-tight">BHARAT<span class="text-emerald-500">AI</span> TERMINAL</h1>
+            </div>
+            <div class="flex gap-2 w-full md:w-96">
+                <input id="symbol" type="text" placeholder="NSE Symbol (e.g. RELIANCE)" class="w-full bg-slate-900 border border-slate-700 px-4 py-2 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none uppercase text-sm">
+                <button onclick="runAnalysis()" class="bg-emerald-600 hover:bg-emerald-500 px-6 py-2 rounded-xl font-bold transition-all text-sm whitespace-nowrap">ANALYZE</button>
             </div>
         </div>
-    </nav>
+    </header>
 
-    <main class="max-w-7xl mx-auto p-6 space-y-6">
+    <main class="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                <p class="text-gray-400 text-sm">Current Price (NSE)</p>
-                <h2 id="price" class="text-4xl font-bold mt-2">₹0.00</h2>
-                <span id="change" class="text-green-400 text-sm">--%</span>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="glass p-6 rounded-2xl">
+                <p class="text-xs text-slate-400 uppercase font-bold mb-1">Last Traded Price</p>
+                <div id="price" class="text-3xl font-mono font-bold text-white">₹0.00</div>
+                <div id="change" class="text-sm mt-1">--</div>
             </div>
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                <p class="text-gray-400 text-sm">P/E Ratio</p>
-                <h2 id="pe" class="text-4xl font-bold mt-2">--</h2>
+            <div class="glass p-6 rounded-2xl">
+                <p class="text-xs text-slate-400 uppercase font-bold mb-1">Day High</p>
+                <div id="high" class="text-xl font-bold text-emerald-400">₹0.00</div>
             </div>
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                <p class="text-gray-400 text-sm">EPS (TTM)</p>
-                <h2 id="eps" class="text-4xl font-bold mt-2">--</h2>
+            <div class="glass p-6 rounded-2xl">
+                <p class="text-xs text-slate-400 uppercase font-bold mb-1">Day Low</p>
+                <div id="low" class="text-xl font-bold text-red-400">₹0.00</div>
+            </div>
+            <div class="glass p-6 rounded-2xl bg-emerald-500/10 border-emerald-500/30">
+                <p class="text-xs text-emerald-400 uppercase font-bold mb-1">Technical Signal</p>
+                <div id="signal" class="text-xl font-bold">READY</div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 bg-gray-800 p-6 rounded-xl border border-gray-700">
-                <h3 class="text-lg font-semibold mb-4">Price Trend (30 Days)</h3>
-                <canvas id="stockChart" height="150"></canvas>
+            <div class="lg:col-span-2 glass p-6 rounded-2xl min-h-[400px]">
+                <h3 class="text-sm font-bold text-slate-400 mb-4 uppercase italic">Technical Chart (Price Action)</h3>
+                <div class="h-[350px] w-full">
+                    <canvas id="stockChart"></canvas>
+                </div>
             </div>
 
-            <div class="bg-blue-900/20 p-6 rounded-xl border border-blue-500/50">
-                <h3 class="text-blue-400 font-bold uppercase tracking-wider text-sm mb-4">AI Agent Verdict</h3>
-                <div id="recommendation" class="text-2xl font-bold mb-4">Awaiting Input...</div>
-                <ul id="newsItems" class="text-sm text-gray-300 space-y-3">
-                    <li>• Enter a ticker to see latest news analysis.</li>
-                    <li>• AI will scan market sentiment.</li>
-                </ul>
+            <div class="glass p-6 rounded-2xl border-l-4 border-l-emerald-500 flex flex-col">
+                <div class="flex items-center gap-2 mb-4">
+                    <i class="fas fa-robot text-emerald-500"></i>
+                    <h3 class="text-sm font-bold uppercase tracking-widest">Gemini AI Insights</h3>
+                </div>
+                <div id="aiLoader" class="hidden animate-pulse space-y-3">
+                    <div class="h-4 bg-slate-800 rounded w-3/4"></div>
+                    <div class="h-4 bg-slate-800 rounded w-full"></div>
+                    <div class="h-4 bg-slate-800 rounded w-5/6"></div>
+                </div>
+                <div id="aiOutput" class="text-sm text-slate-300 leading-relaxed overflow-y-auto">
+                    Enter a stock symbol to generate an AI technical analysis and news summary.
+                </div>
             </div>
         </div>
     </main>
 
     <script>
-        let chart;
-        function analyzeStock() {
-            const ticker = document.getElementById('stockInput').value.toUpperCase();
-            if(!ticker) return alert("Please enter a stock symbol");
+        // CONFIG - PASTE YOUR KEYS HERE
+        const TD_API_KEY = 'fdf2ab9f462140edbb9982503bb3c4c5';
+        const GEMINI_API_KEY = 'gen-lang-client-0664481384';
 
-            // Mock Data Generator (Simulating AI/Market Fetch)
-            const mockPrice = (Math.random() * 2000 + 500).toFixed(2);
-            const mockPE = (Math.random() * 30 + 10).toFixed(2);
-            const mockEPS = (Math.random() * 100 + 10).toFixed(2);
-            
-            // Update UI
-            document.getElementById('price').innerText = `₹${mockPrice}`;
-            document.getElementById('pe').innerText = mockPE;
-            document.getElementById('eps').innerText = mockEPS;
-            document.getElementById('change').innerText = "+1.42% (Today)";
+        let chartInstance = null;
 
-            // AI Logic Simulation
-            const recs = ["BUY", "SELL", "HOLD"];
-            const decision = recs[Math.floor(Math.random() * recs.length)];
-            const recEl = document.getElementById('recommendation');
-            recEl.innerText = decision;
-            recEl.className = `text-2xl font-bold mb-4 ${decision === 'BUY' ? 'text-green-500' : decision === 'SELL' ? 'text-red-500' : 'text-yellow-500'}`;
+        async function runAnalysis() {
+            const symbol = document.getElementById('symbol').value.toUpperCase();
+            if (!symbol) return;
 
-            document.getElementById('newsItems').innerHTML = `
-                <li>• RSI suggests stock is in ${decision === 'BUY' ? 'oversold' : 'fair'} territory.</li>
-                <li>• Institutional buying increased by 2% this week.</li>
-                <li>• Quarterly results expected to beat estimates.</li>
-            `;
+            // Reset UI
+            document.getElementById('aiOutput').innerText = "";
+            document.getElementById('aiLoader').classList.remove('hidden');
 
-            updateChart();
+            try {
+                // 1. Fetch Real Price Data
+                const quoteRes = await fetch(`https://api.twelvedata.com/quote?symbol=${symbol}:NSE&apikey=${TD_API_KEY}`);
+                const quote = await quoteRes.json();
+                
+                if (quote.status === "error") throw new Error(quote.message);
+
+                updatePriceUI(quote);
+
+                // 2. Fetch History for Chart
+                const histRes = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}:NSE&interval=1day&outputsize=15&apikey=${TD_API_KEY}`);
+                const history = await histRes.json();
+                renderChart(history.values);
+
+                // 3. Ask Gemini for Recommendation
+                generateAIRecommendation(symbol, quote);
+
+            } catch (err) {
+                alert("Error: " + err.message);
+                document.getElementById('aiLoader').classList.add('hidden');
+            }
         }
 
-        function updateChart() {
+        function updatePriceUI(data) {
+            document.getElementById('price').innerText = `₹${parseFloat(data.close).toFixed(2)}`;
+            document.getElementById('high').innerText = `₹${parseFloat(data.high).toFixed(2)}`;
+            document.getElementById('low').innerText = `₹${parseFloat(data.low).toFixed(2)}`;
+            
+            const change = parseFloat(data.percent_change).toFixed(2);
+            const changeEl = document.getElementById('change');
+            changeEl.innerText = `${change}% Today`;
+            changeEl.className = change >= 0 ? 'text-emerald-400 text-sm' : 'text-red-400 text-sm';
+            
+            const signalEl = document.getElementById('signal');
+            signalEl.innerText = change >= 0 ? 'BULLISH' : 'BEARISH';
+            signalEl.className = `text-xl font-bold ${change >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+        }
+
+        function renderChart(values) {
             const ctx = document.getElementById('stockChart').getContext('2d');
-            if(chart) chart.destroy();
-            chart = new Chart(ctx, {
+            const labels = values.map(v => v.datetime).reverse();
+            const prices = values.map(v => parseFloat(v.close)).reverse();
+
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: Array.from({length: 10}, (_, i) => `Day ${i+1}`),
+                    labels: labels,
                     datasets: [{
-                        label: 'Price INR',
-                        data: Array.from({length: 10}, () => Math.floor(Math.random() * 500 + 1500)),
-                        borderColor: '#3b82f6',
-                        tension: 0.4,
+                        label: 'Price',
+                        data: prices,
+                        borderColor: '#10b981',
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
                         fill: true,
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)'
+                        tension: 0.4
                     }]
                 },
-                options: { 
+                options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { y: { grid: { color: '#374151' } }, x: { grid: { display: false } } }
+                    scales: {
+                        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
                 }
             });
+        }
+
+        async function generateAIRecommendation(symbol, data) {
+            const output = document.getElementById('aiOutput');
+            const prompt = `Analyze stock ${symbol} at price ₹${data.close}. Change today is ${data.percent_change}%. Give a professional Indian market style recommendation (Buy/Hold/Sell) and mention 3 potential technical reasons. Keep it concise.`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                const result = await response.json();
+                const aiText = result.candidates[0].content.parts[0].text;
+                
+                document.getElementById('aiLoader').classList.add('hidden');
+                output.innerText = aiText;
+            } catch (err) {
+                output.innerText = "Gemini was unable to analyze this at the moment.";
+            }
         }
     </script>
 </body>
